@@ -16,6 +16,10 @@ type BaseUnit struct {
 	Scale *scales.Scale
 }
 
+func (bu *BaseUnit) String() string {
+	return fmt.Sprintf("%s%s", bu.Scale.Short, bu.Unit.Short)
+}
+
 // ComplexUnit is a chain of base units and exponents
 // For example, 'km/s*s'
 type ComplexUnit struct {
@@ -23,10 +27,28 @@ type ComplexUnit struct {
 	exponents []int
 }
 
+func (cu *ComplexUnit) String() string {
+	str := ""
+
+	for i := range cu.units {
+		if cu.exponents[i] == -1 {
+			str += fmt.Sprintf("/%s", cu.units[i].String())
+		} else {
+			str += fmt.Sprintf("*%s", cu.units[i].String())
+		}
+	}
+
+	return str
+}
+
 // Dimension is a dimensional object with a value and complex unit
 type Dimension struct {
 	float64
 	unit ComplexUnit
+}
+
+func (d *Dimension) String() string {
+	return fmt.Sprintf("%.4f %s", d.float64, d.unit.String())
 }
 
 func ParseBaseUnit(unitString string) (*BaseUnit, error) {
@@ -86,7 +108,7 @@ func ParseBaseUnit(unitString string) (*BaseUnit, error) {
 }
 
 var parserRegex = regexp.MustCompile(`(?m)^([0-9\.e*\-\^]+)[ ]*([a-zA-Z\/\*]+)$`)
-var unitRegex = regexp.MustCompile(`(?m)^(([\/\*]{0,1})([a-zA-Z]+))+$`)
+var unitRegex = regexp.MustCompile(`([\/\*]{0,1})([a-zA-Z]+)`)
 
 func Parse(s string) (*Dimension, error) {
 	matches := parserRegex.FindStringSubmatch(s)
@@ -105,30 +127,29 @@ func Parse(s string) (*Dimension, error) {
 
 	dimension := Dimension{float64: value}
 
-	unitStrings := unitRegex.FindStringSubmatch(matches[2])
-	fmt.Printf("Unit strings: %+v\n", unitStrings)
+	unitStrings := unitRegex.FindAllStringSubmatch(matches[2], -1)
 
-	/*
-		for i, unitBlock := range unitStrings {
+	for _, unitBlock := range unitStrings {
 
-			fmt.Printf("Unit block: `%s`\n", unitBlock)
-
-			exponent := 1
-			if unitBlock[1] == "/" {
-				exponent = -1
-			}
-
-			unit, err := ParseBaseUnit(unitBlock[2])
-			if err != nil {
-				return err
-			}
-
-			dimension.unit.units[i] = *unit
-			dimension.unit.exponents[i] = exponent
-
+		exponent := 1
+		if len(unitBlock) == 3 && unitBlock[1] == "/" {
+			exponent = -1
 		}
 
-		fmt.Printf("Object: %+v", dimension)
-	*/
+		unitIndex := 1
+		if len(unitBlock) == 3 {
+			unitIndex = 2
+		}
+
+		unit, err := ParseBaseUnit(unitBlock[unitIndex])
+		if err != nil {
+			return nil, err
+		}
+
+		dimension.unit.units = append(dimension.unit.units, *unit)
+		dimension.unit.exponents = append(dimension.unit.exponents, exponent)
+
+	}
+
 	return &dimension, nil
 }

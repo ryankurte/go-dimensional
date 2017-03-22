@@ -67,16 +67,19 @@ func TestDimensional(t *testing.T) {
 	})
 
 	t.Run("Parses strings", func(t *testing.T) {
-		_, err := Parse("100m/s/s")
+		d, err := Parse("100m/s/s")
 		if err != nil {
 			t.Error(err)
 		}
 
-		_, err = Parse("1.74m*s*s")
+		fmt.Printf("Dimension: %s\n", d.String())
+
+		d, err = Parse("1.74m*s*s")
 		if err != nil {
 			t.Error(err)
 		}
 
+		fmt.Printf("Dimension: %s\n", d.String())
 	})
 
 }
