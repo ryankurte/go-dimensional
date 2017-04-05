@@ -17,4 +17,9 @@ Experimental / WIP. If you feel like adding a feature, pull requests would be gr
 - [ ] Pretty printer with superscript notation (eg. `9.98 m/s²`)
 - [ ] Exponent / Carat parsing (eg. `32.7e8 m/s^2`)
 - [ ] Base type constructors (eg. `MHz(433.3)` )
+- [ ] Generic MarshalText/UnmarshalText methods
+- [ ] Generic simple unit types (ie. Frequency type that enforces units when parsing)
 
+### Thoughts
+
+Not totally sure how to map between go style types (`type Frequency float64`) and more complex types. Might have to use a base type with methods and some reflection :-/
