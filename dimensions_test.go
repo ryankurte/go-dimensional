@@ -1,9 +1,11 @@
 package dimensional
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ryankurte/go-dimensional/scales"
 	"github.com/ryankurte/go-dimensional/units"
+	"reflect"
 	"testing"
 )
 
@@ -74,12 +76,42 @@ func TestDimensional(t *testing.T) {
 
 		fmt.Printf("Dimension: %s\n", d.String())
 
-		d, err = Parse("1.74m*s*s")
+		d, err = Parse("1.74 Km*s*s")
 		if err != nil {
 			t.Error(err)
 		}
 
 		fmt.Printf("Dimension: %s\n", d.String())
+	})
+
+	type dimensionContainer struct {
+		Value Dimension
+	}
+
+	t.Run("Parses dimensions from generic decoders", func(t *testing.T) {
+
+		var dc dimensionContainer
+		err := json.Unmarshal([]byte(`{"value": "100 Km*s/mg"}`), &dc)
+		if err != nil {
+			t.Error(err)
+		}
+
+		d := dc.Value
+
+		fmt.Printf("Dimension: %s\n", d.String())
+
+		if expected := 100.0; d.float64 != expected {
+			t.Errorf("Invalid value (actual %f, expected %f)", d.float64, expected)
+		}
+
+		if expected := []BaseUnit{{units.Meter, scales.Kilo}, {units.Second, scales.None}, {units.Gram, scales.Milli}}; !reflect.DeepEqual(d.unit.units, expected) {
+			t.Errorf("Invalid units (actual %+v, expected %+v)", d.unit.units, expected)
+		}
+
+		if expected := []int{1, 1, -1}; !reflect.DeepEqual(d.unit.exponents, expected) {
+			t.Errorf("Invalid exponents (actual %+v, expected %+v)", d.unit.exponents, expected)
+		}
+
 	})
 
 }

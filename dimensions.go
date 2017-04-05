@@ -51,6 +51,22 @@ func (d *Dimension) String() string {
 	return fmt.Sprintf("%.4f %s", d.float64, d.unit.String())
 }
 
+func (d *Dimension) MarshalText() ([]byte, error) {
+	return nil, fmt.Errorf("Not implemented")
+}
+
+func (d *Dimension) UnmarshalText(text []byte) error {
+	dim, err := Parse(string(text))
+	if err != nil {
+		return err
+	}
+
+	d.float64 = dim.float64
+	d.unit = dim.unit
+
+	return nil
+}
+
 func ParseBaseUnit(unitString string) (*BaseUnit, error) {
 
 	// Match against base units
